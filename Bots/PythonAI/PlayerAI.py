@@ -7,6 +7,17 @@ import random
 from collections import defaultdict
 from Q import Q
 
+DIRECTIONS = [
+    Direction.EAST,
+    Direction.NORTH,
+    Direction.NORTH_EAST,
+    Direction.NORTH_WEST,
+    Direction.SOUTH,
+    Direction.SOUTH_EAST,
+    Direction.SOUTH_WEST,
+    Direction.WEST,
+]
+
 # actions
 MOVE_TO_CONTROL_POINT = "move to control point"
 MOVE_TO_PICKUP = "move to pickup"
@@ -36,6 +47,10 @@ def get_possible_actions(world, unit, enemy_units):
     if unit.check_pickup_result() == PickupResult.PICK_UP_VALID:
         return [PICKUP]
 
+    if not actions:
+        # put a list of valid directions we can move to
+        return [direction for direction in DIRECTIONS if unit.check_move_in_direction() == MoveResult.MOVE_VALID]
+
     random.shuffle(actions)
     return actions
 
@@ -58,6 +73,9 @@ def perform_action(world, unit, action, enemy_units):
         unit.pickup_item_at_position()
     elif action == SHIELD:
         unit.activate_shield()
+    else:
+        direction = action
+        unit.move(direction)
 
 class PlayerAI:
     def __init__(self):

@@ -30,7 +30,7 @@ class Q(object):
             pickle.dump(self.q, q_file)
 
     def update(self, new_state, all_actions_in_new_state, reward):
-        if not self.last_state or not self.last_action:
+        if not self.last_state or not self.last_action or not all_actions_in_new_state:
             return
 
         # update algorithm according to formula
