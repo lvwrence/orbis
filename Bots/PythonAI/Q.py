@@ -20,11 +20,10 @@ class Q(object):
         atexit.register(self.save)
 
     def load(self):
+        self.q = defaultdict(int)
         if os.path.exists(Q_JSON_PATH):
             with open(Q_JSON_PATH) as q_file:
-                self.q = json.load(q_file)
-        else:
-            self.q = defaultdict(int)
+                self.q.update(json.load(q_file))
 
     def save(self):
         with open(Q_JSON_PATH, "w") as q_file:

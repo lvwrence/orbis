@@ -6,43 +6,79 @@ from PythonClientAPI.libs.Game.World import *
 import random
 from Q import Q
 
-MOVE = 0
-SHOOT = 1
-PICKUP = 2
-SHIELD = 3
 
-# IS_UNIT_WITHIN_5_SQUARES_TO_CLOSEST_POWERUP = 4
-IS_UNIT_WITHIN_5_SQUARES_TO_CLOSEST_CONTROL_POINT = 5
-DIRECTION_TO_CLOSEST_CONTROL_POINT = 6
+debug = True
 
-def get_possible_actions(enemy_units):
-    # append dem shooting actions
+if debug:
+    # actions
+    MOVE = "move"
+    SHOOT = "shoot"
+    PICKUP = "pickup"
+    SHIELD = "shield"
+
+    # enemies
+    ALPHA = "alpha"
+    BRAVO = "bravo"
+    CHARLIE = "charlie"
+    DELTA = "delta"
+
+    # state features
+    DIRECTION_TO_CLOSEST_CONTROL_POINT = "direction to closest control point"
+else:
+    # actions
+    MOVE = 0
+    SHOOT = 1
+    PICKUP = 2
+    SHIELD = 3
+
+    # enemies
+    ALPHA = 12
+    BRAVO = 13
+    CHARLIE = 14
+    DELTA = 15
+
+    # features
+    DIRECTION_TO_CLOSEST_CONTROL_POINT = 16
+
+def get_possible_actions():
     actions = [
-        (MOVE, Direction.EAST),
-        (MOVE, Direction.NORTH),
-        (MOVE, Direction.NORTH_EAST),
-        (MOVE, Direction.NORTH_WEST),
-        (MOVE, Direction.SOUTH),
-        (MOVE, Direction.SOUTH_EAST),
-        (MOVE, Direction.SOUTH_WEST),
-        (MOVE, Direction.WEST),
-        (PICKUP,),
-        (SHIELD,),
-    ] + [
-        (SHOOT, enemy_unit) for enemy_unit in enemy_units
+        # directions
+        Direction.EAST,
+        Direction.NORTH,
+        Direction.NORTH_EAST,
+        Direction.NORTH_WEST,
+        Direction.SOUTH,
+        Direction.SOUTH_EAST,
+        Direction.SOUTH_WEST,
+        Direction.WEST,
+        # shoot enemies
+        ALPHA,
+        BRAVO,
+        CHARLIE,
+        DELTA,
+        # other
+        PICKUP,
+        SHIELD,
     ]
     random.shuffle(actions)
     return actions
 
-def perform_action(unit, action):
-    if (action[0] == MOVE):
-        unit.move(action[1])
-    elif (action[0] == SHOOT):
-        unit.shoot_at(action[1])
-    elif (action[0] == PICKUP):
+def perform_action(unit, action, enemy_units):
+    if action == ALPHA:
+        unit.shoot_at(enemy_units[0])
+    elif action == BRAVO:
+        unit.shoot_at(enemy_units[1])
+    elif action == CHARLIE:
+        unit.shoot_at(enemy_units[2])
+    elif action == DELTA:
+        unit.shoot_at(enemy_units[3])
+    elif action == PICKUP:
         unit.pickup_item_at_position()
-    elif (action[0] == SHIELD):
+    elif action == SHIELD:
         unit.activate_shield()
+    else:
+        direction = action
+        unit.move(direction)
 
 
 class PlayerAI:
@@ -63,7 +99,7 @@ class PlayerAI:
             reward = 100
 
         state = self._world_to_state(world, enemy_units, unit)
-        self.Q.update(state, get_possible_actions(enemy_units), reward)
+        self.Q.update(state, get_possible_actions(), reward)
 
     def do_move(self, world, enemy_units, friendly_units):
         """
@@ -75,5 +111,5 @@ class PlayerAI:
         for friendly_unit in friendly_units:
             self._update(world, enemy_units, friendly_unit)
             state = self._world_to_state(world, enemy_units, friendly_unit)
-            best_action = self.Q.choose_action(state, get_possible_actions(enemy_units))
-            perform_action(friendly_unit, best_action)
+            best_action = self.Q.choose_action(state, get_possible_actions())
+            perform_action(friendly_unit, best_action, enemy_units)
