@@ -101,9 +101,10 @@ class PlayerAI:
             # reward = 100
 
         captured_control_points = getattr(unit, 'captured_control_points', set())
-        current_control_point = next((c for c in world.control_points if c.position == unit.position), None)
+        current_control_point = next((c.name for c in world.control_points if c.position == unit.position), None)
         if current_control_point not in captured_control_points:
             unit.captured_control_points = {current_control_point} | captured_control_points
+            print("got reward for capturing a control point")
             reward += 1000
 
         # if (unit.last_move_result == MoveResult.MOVE_COMPLETED):
