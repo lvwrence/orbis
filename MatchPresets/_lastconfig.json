@@ -1,1 +1,1 @@
-{"mapName":"open_simple","playerPaths":["Bots/PythonAI/PlayerAI.py","Bots/PythonAI/PlayerAI.py"],"maxResponseTime":405,"turnLimit":500,"portNumber":4461,"serverTimeout":86400000,"playerLaunchTypes":["AI","AI"]}
+{"mapName":"mini_open","playerPaths":["Bots/PythonAI/PlayerAI.py","Bots/PythonAI/PlayerAI.py"],"maxResponseTime":405,"turnLimit":500,"portNumber":4461,"serverTimeout":86400000,"playerLaunchTypes":["AI","AI"]}
