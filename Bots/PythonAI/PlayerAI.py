@@ -114,5 +114,5 @@ class PlayerAI:
         for friendly_unit in friendly_units:
             self._update(world, enemy_units, friendly_unit)
             state = self._world_to_state(world, enemy_units, friendly_unit)
-            best_action = self.Q.choose_action(state, get_possible_actions(world, unit))
+            best_action = self.Q.choose_action(state, get_possible_actions(world, friendly_unit))
             perform_action(world, friendly_unit, best_action, enemy_units)
