@@ -27,13 +27,14 @@ def get_possible_actions(world, unit, enemy_units):
         actions.append(MOVE_TO_CONTROL_POINT)
     if world.pickups:
         actions.append(MOVE_TO_PICKUP)
-    if unit.check_pickup_result() == PickupResult.PICK_UP_VALID:
-        actions.append(PICKUP)
     if unit.check_shield_activation() == ActivateShieldResult.SHIELD_ACTIVATION_VALID:
         actions.append(SHIELD)
 
     if any(unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY for enemy in enemy_units):
         return [SHOOT_ENEMY]
+
+    if unit.check_pickup_result() == PickupResult.PICK_UP_VALID:
+        return [PICKUP]
 
     random.shuffle(actions)
     return actions
