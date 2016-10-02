@@ -104,6 +104,9 @@ class PlayerAI:
         if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
             reward = 50
 
+        if (unit.last_shot_result == ShotResult.HIT_ENEMY):
+            reward = unit.current_weapon_type.get_damage() * 10
+
         state = self._world_to_state(world, enemy_units, unit)
         self.Q.update(state, get_possible_actions(), reward)
 
