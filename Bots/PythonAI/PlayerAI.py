@@ -66,8 +66,7 @@ class PlayerAI:
         can_shoot_enemy = any(unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY for enemy in enemy_units)
         return ((DISTANCE_TO_CLOSEST_CONTROL_POINT, world.get_path_length(unit.position, closest_control_point.position)),
                 (DISTANCE_TO_CLOSEST_PICKUP, world.get_path_length(unit.position, closest_pickup.position)),
-                (CAN_SHOOT_ENEMY, can_shoot_enemy)),
-               )
+                (CAN_SHOOT_ENEMY, can_shoot_enemy),)
 
     def _update(self, world, enemy_units, unit):
         reward = 0
