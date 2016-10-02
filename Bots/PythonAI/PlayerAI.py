@@ -4,15 +4,20 @@ from PythonClientAPI.libs.Game.Entities import *
 from PythonClientAPI.libs.Game.World import *
 
 import random
+from Q import Q
 
 MOVE = 0
 SHOOT = 1
 PICKUP = 2
 SHIELD = 3
 
+# IS_UNIT_WITHIN_5_SQUARES_TO_CLOSEST_POWERUP = 4
+IS_UNIT_WITHIN_5_SQUARES_TO_CLOSEST_CONTROL_POINT = 5
+DIRECTION_TO_CLOSEST_CONTROL_POINT = 6
+
 def get_possible_actions(enemy_units):
     # append dem shooting actions
-    return [
+    actions = [
         (MOVE, Direction.EAST),
         (MOVE, Direction.NORTH),
         (MOVE, Direction.NORTH_EAST),
@@ -23,43 +28,43 @@ def get_possible_actions(enemy_units):
         (MOVE, Direction.WEST),
         (PICKUP,),
         (SHIELD,),
+    ] + [
+        (SHOOT, enemy_unit) for enemy_unit in enemy_units
     ]
+    random.shuffle(actions)
+    return actions
 
-class MonteCarloMarkovChain(object):
-    def __init__(self):
-        """Creates the state -> value dict."""
-        # check if file exists first. if not, initialize with zero state.
-        self.q = {}
+def perform_action(unit, action):
+    if (action[0] == MOVE):
+        unit.move(action[1])
+    elif (action[0] == SHOOT):
+        unit.shoot_at(action[1])
+    elif (action[0] == PICKUP):
+        unit.pickup_item_at_position()
+    elif (action[0] == SHIELD):
+        unit.activate_shield()
 
-    def __del__(self):
-        # save markov chain here
-        print("goodbye, cruel world")
-
-    def get_q(self, world, unit, action, enemy_units):
-        # logic here for calculating rewards
-        return 0
-
-    def choose_action(self, world, unit, enemy_units):
-        possible_actions = get_possible_actions(enemy_units)
-        actions_to_qs = {}
-        qs_to_actions = {}
-        max_q = 0
-        for action in possible_actions:
-            q = self.get_q(world, unit, action, enemy_units)
-            if q >= max_q:
-                max_q = q
-            actions_to_qs[action] = q
-            if q not in qs_to_actions:
-                qs_to_actions[q] = [action]
-            else:
-                qs_to_actions[q].append(action)
-        best_actions = qs_to_actions[max_q]
-        return random.sample(best_actions, 1)[0]
 
 class PlayerAI:
     def __init__(self):
         # load markov graph, or create it if doesn't exist
-        self.chain = MonteCarloMarkovChain()
+        self.Q = Q()
+
+    def _world_to_state(self, world, enemy_units, unit):
+        # only return whether we're within nearest control point, and direction to it
+        # nearest_control_point = world.get_nearest_control_point(unit.position)
+        # return (
+            # (DIRECTION_TO_CLOSEST_CONTROL_POINT, world.get_next_direction_in_path(unit.position, nearest_control_point.position)),
+        #)
+        return 0
+
+    def _update(self, world, enemy_units, unit):
+        reward = 0
+        if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
+            reward = 100
+
+        state = self._world_to_state(world, enemy_units, unit)
+        self.Q.update(state, get_possible_actions(enemy_units), reward)
 
     def do_move(self, world, enemy_units, friendly_units):
         """
@@ -68,16 +73,8 @@ class PlayerAI:
         :param list[EnemyUnit] enemy_units: An array of all 4 units on the enemy team. Their order won't change.
         :param list[FriendlyUnit] friendly_units: An array of all 4 units on your team. Their order won't change.
         """
-        # need to overlay world w/ items, players
-        world = None
         for friendly_unit in friendly_units:
-            # action is either MOVE, SHOOT, PICKUP, SHIELD, or STANDBY
-            best_action  = self.chain.choose_action(world, friendly_unit, enemy_units)
-            if best_action[0] == MOVE:
-                friendly_unit.move(best_action[1])
-            elif best_action[0] == SHOOT:
-                friendly_unit.shoot_at(best_action[1])
-            elif best_action[0] == PICKUP:
-                friendly_unit.pickup_item_at_position()
-            elif best_action[0] == SHIELD:
-                friendly_unit.activate_shield()
+            self._update(world, enemy_units, friendly_unit)
+            state = self._world_to_state(world, enemy_units, friendly_unit)
+            best_action = self.Q.choose_action(state, get_possible_actions(enemy_units))
+            perform_action(friendly_unit, best_action)
