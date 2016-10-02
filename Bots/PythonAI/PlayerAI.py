@@ -61,8 +61,15 @@ class PlayerAI:
 
     def _world_to_state(self, world, enemy_units, unit):
         uncontrolled_control_points = [c for c in world.control_points if c.controlling_team != unit.team]
-        closest_control_point = min(uncontrolled_control_points, key=lambda c: world.get_path_length(unit.position, c.position))
-        closest_pickup = min(world.pickups, key=lambda p: world.get_path_length(unit.position, p.position))
+        if uncontrolled_control_points:
+            closest_control_point = min(uncontrolled_control_points, key=lambda c: world.get_path_length(unit.position, c.position))
+        else:
+            closest_control_point = float('inf')
+
+        if world.pickups:
+            closest_pickup = min(world.pickups, key=lambda p: world.get_path_length(unit.position, p.position))
+        else:
+            closest_pickup = float('inf')
         can_shoot_enemy = any(unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY for enemy in enemy_units)
         return ((DISTANCE_TO_CLOSEST_CONTROL_POINT, world.get_path_length(unit.position, closest_control_point.position)),
                 (DISTANCE_TO_CLOSEST_PICKUP, world.get_path_length(unit.position, closest_pickup.position)),
