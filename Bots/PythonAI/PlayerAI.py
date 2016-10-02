@@ -71,7 +71,8 @@ class PlayerAI:
             closest_pickup = min(world.pickups, key=lambda p: world.get_path_length(unit.position, p.position))
             distance_to_closest_pickup = world.get_path_length(unit.position, closest_pickup.position)
         else:
-            distance_to_closest_pickupclosest_pickup = float('inf')
+            distance_to_closest_pickup = float('inf')
+
         can_shoot_enemy = any(unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY for enemy in enemy_units)
         return ((DISTANCE_TO_CLOSEST_CONTROL_POINT, distance_to_closest_control_point),
                 (DISTANCE_TO_CLOSEST_PICKUP, distance_to_closest_pickup),
