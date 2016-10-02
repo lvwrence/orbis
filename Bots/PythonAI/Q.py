@@ -1,15 +1,31 @@
 import random
+import json
+import os
+import atexit
 from collections import defaultdict
 
 class Q(object):
     def __init__(self):
         """Creates the state -> value dict."""
-        self.q = defaultdict(int)
+        self.load()
         self.alpha = 0.5
         self.epsilon = 0.25
         self.gamma = 0.3
         self.last_action = None
         self.last_state = None
+
+        atexit.register(self.save)
+
+    def load(self):
+        if os.path.exists("q.json"):
+            with open("q.json") as q_file:
+                self.q = json.load(q_file)
+        else:
+            self.q = defaultdict(int)
+
+    def save(self):
+        with open("q.json", "w") as q_file:
+            json.dump(self.q, q_file)
 
     def update(self, new_state, all_actions_in_new_state, reward):
         if not self.last_state or not self.last_action:

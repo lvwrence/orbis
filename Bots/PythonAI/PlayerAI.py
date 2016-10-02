@@ -52,11 +52,10 @@ class PlayerAI:
 
     def _world_to_state(self, world, enemy_units, unit):
         # only return whether we're within nearest control point, and direction to it
-        # nearest_control_point = world.get_nearest_control_point(unit.position)
-        # return (
-            # (DIRECTION_TO_CLOSEST_CONTROL_POINT, world.get_next_direction_in_path(unit.position, nearest_control_point.position)),
-        #)
-        return 0
+        nearest_control_point = world.get_nearest_control_point(unit.position)
+        return tuple(
+            (DIRECTION_TO_CLOSEST_CONTROL_POINT, world.get_next_direction_in_path(unit.position, nearest_control_point.position)),
+        )
 
     def _update(self, world, enemy_units, unit):
         reward = 0
