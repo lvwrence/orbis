@@ -1,11 +1,11 @@
 import random
-import json
+import pickle
 import os
 import atexit
 from collections import defaultdict
 
 DIRPATH = os.path.dirname(os.path.realpath(__file__))
-Q_JSON_PATH = os.path.join(DIRPATH, "q.json")
+Q_PICKLE_PATH = os.path.join(DIRPATH, "q.pickle")
 
 class Q(object):
     def __init__(self):
@@ -21,13 +21,13 @@ class Q(object):
 
     def load(self):
         self.q = defaultdict(int)
-        if os.path.exists(Q_JSON_PATH):
-            with open(Q_JSON_PATH) as q_file:
-                self.q.update(json.load(q_file))
+        if os.path.exists(Q_PICKLE_PATH):
+            with open(Q_PICKLE_PATH, "rb") as q_file:
+                self.q.update(pickle.load(q_file))
 
     def save(self):
-        with open(Q_JSON_PATH, "w") as q_file:
-            json.dump(self.q, q_file)
+        with open(Q_PICKLE_PATH, "wb") as q_file:
+            pickle.dump(self.q, q_file)
 
     def update(self, new_state, all_actions_in_new_state, reward):
         if not self.last_state or not self.last_action:

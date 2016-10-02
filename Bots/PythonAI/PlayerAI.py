@@ -98,6 +98,12 @@ class PlayerAI:
         if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
             reward = 100
 
+        if (unit.last_move_result == MoveResult.MOVE_COMPLETED):
+            reward = 5
+
+        if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
+            reward = 50
+
         state = self._world_to_state(world, enemy_units, unit)
         self.Q.update(state, get_possible_actions(), reward)
 
