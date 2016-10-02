@@ -4,6 +4,7 @@ from PythonClientAPI.libs.Game.Entities import *
 from PythonClientAPI.libs.Game.World import *
 
 import random
+from collections import defaultdict
 from Q import Q
 
 
@@ -87,6 +88,7 @@ def perform_action(unit, action, enemy_units):
 class PlayerAI:
     def __init__(self):
         self.Q = Q()
+        self.units_to_cp = defaultdict(set)
 
     def _world_to_state(self, world, enemy_units, unit):
         uncontrolled_control_points = [c for c in world.control_points if c.controlling_team != unit.team]
@@ -100,11 +102,10 @@ class PlayerAI:
         # if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
             # reward = 100
 
-        captured_control_points = getattr(unit, 'captured_control_points', set())
-        current_control_point = next((c.name for c in world.control_points if c.position == unit.position), None)
-        if current_control_point not in captured_control_points:
-            unit.captured_control_points = {current_control_point} | captured_control_points
-            print("got reward for capturing a control point")
+        captured_control_points = self.units_to_cp[unit.call_sign]
+        current_control_point = next((c.name for c in world.control_points if PointUtils.chebyshev_distance(c.position, unit.position) <= 1), None)
+        if current_control_point and current_control_point not in captured_control_points:
+            self.units_to_cp[unit.call_sign].add(current_control_point)
             reward += 1000
 
         # if (unit.last_move_result == MoveResult.MOVE_COMPLETED):
