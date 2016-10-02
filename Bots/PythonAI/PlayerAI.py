@@ -47,7 +47,7 @@ def perform_action(world, unit, action, enemy_units):
         direction = world.get_next_direction_in_path(unit.position, closest_pickup.position)
         unit.move(direction)
     elif action == SHOOT_ENEMY:
-        enemy = next(enemy for enemy in enemy_units if unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY, None)
+        enemy = next((enemy for enemy in enemy_units if unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY), None)
         unit.shoot_at(enemy)
     elif action == PICKUP:
         unit.pickup_item_at_position()
