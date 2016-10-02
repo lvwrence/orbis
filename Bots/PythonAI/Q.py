@@ -4,6 +4,9 @@ import os
 import atexit
 from collections import defaultdict
 
+DIRPATH = os.path.dirname(os.path.realpath(__file__))
+Q_JSON_PATH = os.path.join(DIRPATH, "q.json")
+
 class Q(object):
     def __init__(self):
         """Creates the state -> value dict."""
@@ -17,14 +20,14 @@ class Q(object):
         atexit.register(self.save)
 
     def load(self):
-        if os.path.exists("q.json"):
-            with open("q.json") as q_file:
+        if os.path.exists(Q_JSON_PATH):
+            with open(Q_JSON_PATH) as q_file:
                 self.q = json.load(q_file)
         else:
             self.q = defaultdict(int)
 
     def save(self):
-        with open("q.json", "w") as q_file:
+        with open(Q_JSON_PATH, "w") as q_file:
             json.dump(self.q, q_file)
 
     def update(self, new_state, all_actions_in_new_state, reward):
