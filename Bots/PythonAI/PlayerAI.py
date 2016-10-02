@@ -23,6 +23,8 @@ if debug:
     DELTA = "delta"
 
     # state features
+    # (normalized) distance to the closest control point not currently controlled by us
+    DISTANCE_TO_CLOSEST_CONTROL_POINT = "distance to closest control point"
     DIRECTION_TO_CLOSEST_CONTROL_POINT = "direction to closest control point"
 else:
     # actions
@@ -38,7 +40,8 @@ else:
     DELTA = 15
 
     # features
-    DIRECTION_TO_CLOSEST_CONTROL_POINT = 16
+    DISTANCE_TO_CLOSEST_CONTROL_POINT = 16
+    DIRECTION_TO_CLOSEST_CONTROL_POINT = 17
 
 def get_possible_actions():
     actions = [
@@ -83,29 +86,31 @@ def perform_action(unit, action, enemy_units):
 
 class PlayerAI:
     def __init__(self):
-        # load markov graph, or create it if doesn't exist
         self.Q = Q()
 
     def _world_to_state(self, world, enemy_units, unit):
-        # only return whether we're within nearest control point, and direction to it
-        nearest_control_point = world.get_nearest_control_point(unit.position)
-        return tuple(
-            (DIRECTION_TO_CLOSEST_CONTROL_POINT, world.get_next_direction_in_path(unit.position, nearest_control_point.position)),
-        )
+        uncontrolled_control_points = [c for c in world.control_points if c.controlling_team != unit.team]
+        closest_control_point = min(uncontrolled_control_points, key=lambda c: world.get_path_length(unit.position, c.position))
+        return ((DISTANCE_TO_CLOSEST_CONTROL_POINT, world.get_path_length(unit.position, closest_control_point.position) // 5),
+                (DIRECTION_TO_CLOSEST_CONTROL_POINT, world.get_next_direction_in_path(unit.position, closest_control_point.position)),
+               )
 
     def _update(self, world, enemy_units, unit):
         reward = 0
-        if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
-            reward = 100
+        # if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
+            # reward = 100
 
-        if (unit.last_move_result == MoveResult.MOVE_COMPLETED):
-            reward = 5
+        captured_control_points = getattr(unit, 'captured_control_points', set())
+        current_control_point = next((c for c in world.control_points if c.position == unit.position), None)
+        if current_control_point not in captured_control_points:
+            unit.captured_control_points = {current_control_point} | captured_control_points
+            reward += 1000
 
-        if (unit.last_pickup_result == PickupResult.PICK_UP_COMPLETE):
-            reward = 50
+        # if (unit.last_move_result == MoveResult.MOVE_COMPLETED):
+            # reward = 5
 
-        if (unit.last_shot_result == ShotResult.HIT_ENEMY):
-            reward = unit.current_weapon_type.get_damage() * 10
+        # if (unit.last_shot_result == ShotResult.HIT_ENEMY):
+            # reward = unit.current_weapon_type.get_damage() * 10
 
         state = self._world_to_state(world, enemy_units, unit)
         self.Q.update(state, get_possible_actions(), reward)
