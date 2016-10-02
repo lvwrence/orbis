@@ -20,22 +20,21 @@ DISTANCE_TO_CLOSEST_CONTROL_POINT = "distance to closest control point"
 DISTANCE_TO_CLOSEST_PICKUP = "distance to closest pickup"
 CAN_SHOOT_ENEMY = "can shoot enemy"
 
-def get_possible_actions(world, unit):
-    actions = [
-        # shoot enemies
-        SHOOT_ENEMY,
-        # other
-        PICKUP,
-        SHIELD,
-        # EXPLORE
-    ]
+def get_possible_actions(world, unit, enemy_units):
+    actions = []
     uncontrolled_control_points = [c for c in world.control_points if c.controlling_team != unit.team]
     if uncontrolled_control_points:
         actions.append(MOVE_TO_CONTROL_POINT)
     if world.pickups:
         actions.append(MOVE_TO_PICKUP)
+    if unit.check_pickup_result() == PickupResult.PICK_UP_VALID:
+        actions.append(PICKUP)
+    if unit.check_shield_activation() == ActivateShieldResult.SHIELD_ACTIVATION_VALID:
+        actions.append(SHIELD)
 
-    # also do shoot_enemy, pickup, shield
+    if any(unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY for enemy in enemy_units):
+        return [SHOOT_ENEMY]
+
     random.shuffle(actions)
     return actions
 
@@ -95,14 +94,14 @@ class PlayerAI:
             reward += 1000
 
         if (unit.last_shot_result == ShotResult.HIT_ENEMY):
-            reward += unit.current_weapon_type.get_damage() * 10
+            reward += unit.current_weapon_type.get_damage() * 250
 
         last_turn_shooters = unit.get_last_turn_shooters()
         if (last_turn_shooters):
             reward -= sum(shooter.current_weapon_type.get_damage() * 10 for shooter in last_turn_shooters)
 
         state = self._world_to_state(world, enemy_units, unit)
-        self.Q.update(state, get_possible_actions(world, unit), reward)
+        self.Q.update(state, get_possible_actions(world, unit, enemy_units), reward)
 
     def do_move(self, world, enemy_units, friendly_units):
         """
@@ -114,5 +113,5 @@ class PlayerAI:
         for friendly_unit in friendly_units:
             self._update(world, enemy_units, friendly_unit)
             state = self._world_to_state(world, enemy_units, friendly_unit)
-            best_action = self.Q.choose_action(state, get_possible_actions(world, friendly_unit))
+            best_action = self.Q.choose_action(state, get_possible_actions(world, friendly_unit, enemy_units))
             perform_action(world, friendly_unit, best_action, enemy_units)
