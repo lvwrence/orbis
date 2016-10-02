@@ -19,8 +19,6 @@ SHIELD = "shield"
 DISTANCE_TO_CLOSEST_CONTROL_POINT = "distance to closest control point"
 DISTANCE_TO_CLOSEST_PICKUP = "distance to closest pickup"
 CAN_SHOOT_ENEMY = "can shoot enemy"
-CAN_KILL_ENEMY = "can kill enemy"
-
 
 def get_possible_actions():
     actions = [
@@ -49,8 +47,8 @@ def perform_action(world, unit, action, enemy_units):
         direction = world.get_next_direction_in_path(unit.position, closest_pickup.position)
         unit.move(direction)
     elif action == SHOOT_ENEMY:
-        # figure out which enemy we can shoot at, and shoot
-        pass
+        enemy = next(enemy for enemy in enemy_units if unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY)
+        unit.shoot_at(enemy)
     elif action == PICKUP:
         unit.pickup_item_at_position()
     elif action == SHIELD:
@@ -65,8 +63,10 @@ class PlayerAI:
         uncontrolled_control_points = [c for c in world.control_points if c.controlling_team != unit.team]
         closest_control_point = min(uncontrolled_control_points, key=lambda c: world.get_path_length(unit.position, c.position))
         closest_pickup = min(world.pickups, key=lambda p: world.get_path_length(unit.position, p.position))
+        can_shoot_enemy = any(unit.check_shot_against_enemy(enemy) == ShotResult.CAN_HIT_ENEMY for enemy in enemy_units)
         return ((DISTANCE_TO_CLOSEST_CONTROL_POINT, world.get_path_length(unit.position, closest_control_point.position)),
                 (DISTANCE_TO_CLOSEST_PICKUP, world.get_path_length(unit.position, closest_pickup.position)),
+                (CAN_SHOOT_ENEMY, can_shoot_enemy)),
                )
 
     def _update(self, world, enemy_units, unit):
@@ -80,8 +80,12 @@ class PlayerAI:
             self.units_to_cp[unit.call_sign].add(current_control_point)
             reward += 1000
 
-        # if (unit.last_shot_result == ShotResult.HIT_ENEMY):
-            # reward = unit.current_weapon_type.get_damage() * 10
+        if (unit.last_shot_result == ShotResult.HIT_ENEMY):
+            reward += unit.current_weapon_type.get_damage() * 10
+
+        last_turn_shooters = unit.get_last_turn_shooters()
+        if (last_turn_shooters):
+            reward -= sum(shooter.current_weapon_type.get_damage() * 10 for shooter in last_turn_shooters)
 
         state = self._world_to_state(world, enemy_units, unit)
         self.Q.update(state, get_possible_actions(), reward)
