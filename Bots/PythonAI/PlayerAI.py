@@ -20,17 +20,22 @@ DISTANCE_TO_CLOSEST_CONTROL_POINT = "distance to closest control point"
 DISTANCE_TO_CLOSEST_PICKUP = "distance to closest pickup"
 CAN_SHOOT_ENEMY = "can shoot enemy"
 
-def get_possible_actions():
+def get_possible_actions(world, unit):
     actions = [
-        # move
-        MOVE_TO_CONTROL_POINT,
-        MOVE_TO_PICKUP,
         # shoot enemies
         SHOOT_ENEMY,
         # other
         PICKUP,
         SHIELD,
+        # EXPLORE
     ]
+    uncontrolled_control_points = [c for c in world.control_points if c.controlling_team != unit.team]
+    if uncontrolled_control_points:
+        actions.append(MOVE_TO_CONTROL_POINT)
+    if world.pickups:
+        actions.append(MOVE_TO_PICKUP)
+
+    # also do shoot_enemy, pickup, shield
     random.shuffle(actions)
     return actions
 
@@ -97,7 +102,7 @@ class PlayerAI:
             reward -= sum(shooter.current_weapon_type.get_damage() * 10 for shooter in last_turn_shooters)
 
         state = self._world_to_state(world, enemy_units, unit)
-        self.Q.update(state, get_possible_actions(), reward)
+        self.Q.update(state, get_possible_actions(world, unit), reward)
 
     def do_move(self, world, enemy_units, friendly_units):
         """
@@ -109,5 +114,5 @@ class PlayerAI:
         for friendly_unit in friendly_units:
             self._update(world, enemy_units, friendly_unit)
             state = self._world_to_state(world, enemy_units, friendly_unit)
-            best_action = self.Q.choose_action(state, get_possible_actions())
+            best_action = self.Q.choose_action(state, get_possible_actions(world, unit))
             perform_action(world, friendly_unit, best_action, enemy_units)
